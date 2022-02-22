@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const INPUT_FILE = path.join(__dirname, 'initial_thermal_events.csv');
+const OUTPUT_FILE = path.join(__dirname, 'event-px-history.json');
 
 function readCsv() {
   return new Promise((resolve, reject) => {
@@ -23,9 +24,18 @@ async function fetchApiData(eventId) {
 (async function() {
   let rows = await readCsv();
   rows.splice(0, 93); // splice off bad data rows
+  
   let results = {};
+  if( fs.existsSync(OUTPUT_FILE) ) {
+    results = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf-8'));
+  }
 
   for( let event of rows ) {
+    if( results[event[0]] ) {
+      console.log('ignoring, already downloaded, '+event[0]+': '+event[1]);
+      continue;
+    }
+
     console.log('fetching '+event[0]+': '+event[1]);
     let data = await fetchApiData(event[1]);
 
